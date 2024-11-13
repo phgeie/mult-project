@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Application</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body, html {
+            font-family: Arial, sans-serif;
+            height: 100%;
+            margin: 0;
+            background-color: #ece5dd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #chat-container {
+            width: 75vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+
+        #header {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: #075e54;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: bold;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        #header img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+
+        #messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background-color: #e5ddd5;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+            background-color: #dcf8c6;
+        }
+
+        .message.received {
+            align-self: flex-start;
+            background-color: #ffffff;
+        }
+
+        #input-container {
+            display: flex;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-top: 1px solid #ddd;
+            width: 100%;
+        }
+
+        #message {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            outline: none;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        #send-button {
+            background-color: #075e54;
+            color: #ffffff;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #send-button:hover {
+            background-color: #0b7a62;
+        }
+    </style>
+    <script type="text/javascript">
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('/chat-websocket');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/messages', function (message) {
+                    showMessage(JSON.parse(message.body).text, 'received');
+                });
+				
+				stompClient.subscribe('/topic/clear', function (message) {
+                    clearMessages();
+                });
+				console.log('requesting: ');
+			    stompClient.send("/app/send", {}, "###REQUEST_ALL_MESSAGES###");
+            });
+        }
+
+        function sendMessage() {
+            var messageContent = document.getElementById('message').value;
+            if (messageContent.trim() !== '') {
+                showMessage(messageContent, 'sent');
+                stompClient.send("/app/send", {}, messageContent);
+                document.getElementById('message').value = '';
+            }
+        }
+
+        function showMessage(message, type) {
+            var messages = document.getElementById('messages');
+            var messageElement = document.createElement('div');
+            messageElement.classList.add('message', type);
+            messageElement.textContent = message;
+            messages.appendChild(messageElement);
+
+            messages.scrollTop = messages.scrollHeight;
+        }
+		
+		function clearMessages() {
+            var messages = document.getElementById('messages');
+            messages.innerHTML = '';
+        }
+
+        window.onload = connect;
+    </script>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="header">
+            <img src="/images/fstchat-icon.png" alt="FSTChat Icon">
+            FSTChat
+        </div>
+        <div id="messages"></div>
+        <div id="input-container">
+            <input type="text" id="message" placeholder="Type a message..." onkeypress="if(event.key === 'Enter') sendMessage();">
+            <button id="send-button" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+</body>
+</html>

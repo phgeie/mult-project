@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    dependencies {
+        testImplementation 'junit:junit:5.9.2'
+    }
+}

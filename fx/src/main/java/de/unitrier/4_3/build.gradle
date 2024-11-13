@@ -1,0 +1,18 @@
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.0.8'
+    id 'application'
+}
+
+javafx {
+    version = '11.0.2'
+    modules = [ 'javafx.controls']
+}
+
+application {
+    mainClass = 'com.example.StockChartApp'
+}
+
+repositories {
+    mavenCentral()
+}
+
